@@ -10,7 +10,7 @@
 
 
     <HBox fx:id="authPanel">
-        <TextField fx:id="userNameField" promptText="Введите имя пользователя" HBox.hgrow="ALWAYS"
+        <TextField fx:id="loginField" promptText="Введите имя пользователя" HBox.hgrow="ALWAYS"
                    onAction="#connect"/>
         <PasswordField fx:id="userPasswordField" promptText="Введите пароль" HBox.hgrow="ALWAYS"
                        onAction="#connect"/>
