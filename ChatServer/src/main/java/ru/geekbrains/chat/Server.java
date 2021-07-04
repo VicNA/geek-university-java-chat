@@ -1,4 +1,4 @@
-package ru.geekbrains.javalevel3.lesson2;
+package ru.geekbrains.chat;
 
 import java.io.IOException;
 import java.net.ServerSocket;

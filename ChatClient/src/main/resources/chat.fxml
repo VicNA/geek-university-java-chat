@@ -5,7 +5,7 @@
 
 <?import javafx.scene.text.Font?>
 <VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="ru.geekbrains.javalevel3.lesson2.ClientController"
+      fx:controller="ru.geekbrains.chat.ClientController"
       prefWidth="600" prefHeight="400">
 
 
