@@ -10,12 +10,13 @@ import javafx.scene.layout.VBox;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ClientController {
 
-    private final int LAST_LINES = 2;
+    private final int LAST_LINES = 100;
 
     @FXML
     public VBox clientsBox;
@@ -28,9 +29,13 @@ public class ClientController {
     @FXML
     private TextArea chatArea;
     @FXML
-    private TextField messageField, loginField;
+    private TextField messageField;
     @FXML
-    private HBox authPanel, msgPanel;
+    private TextField loginField;
+    @FXML
+    private HBox authPanel;
+    @FXML
+    private HBox msgPanel;
 
     private Socket socket;
     private DataInputStream in;
@@ -100,15 +105,16 @@ public class ClientController {
                     setAuthorized(true);
                     String connectedUser = "Ваше имя: " + inputMessage.split("\\s+")[1];
                     Platform.runLater(() -> currentUser.setText(connectedUser));
-                    List<String> lines = reader.lines().collect(Collectors.toList());
-                    if (lines.size() <= LAST_LINES) {
-                        for (String line : lines) {
-                            chatArea.appendText(line + "\n");
+
+                    List<String> history = new LinkedList<>();
+                    while (reader.ready()) {
+                        history.add(reader.readLine());
+                        if (history.size() > LAST_LINES) {
+                            history.remove(0);
                         }
-                    } else {
-                        for (int i = lines.size() - LAST_LINES; i < lines.size(); i++) {
-                            chatArea.appendText(lines.get(i) + "\n");
-                        }
+                    }
+                    for (String s : history) {
+                        chatArea.appendText(s + "\n");
                     }
                     break;
                 }
@@ -117,7 +123,7 @@ public class ClientController {
         }
     }
 
-    //  Обработка входящих ответов сервера на посылаемые пользователем сообщения в чате
+//  Обработка входящих ответов сервера на посылаемые пользователем сообщения в чате
 //  и отображение этих сообщений в графическом клиенте
     private void runChat() throws IOException {
         String fileName = loginField.getText() + ".txt";
