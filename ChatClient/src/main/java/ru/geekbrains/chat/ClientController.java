@@ -8,12 +8,15 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClientController {
+
+    private final int LAST_LINES = 100;
 
     @FXML
     public VBox clientsBox;
@@ -26,9 +29,13 @@ public class ClientController {
     @FXML
     private TextArea chatArea;
     @FXML
-    private TextField messageField, userNameField;
+    private TextField messageField;
     @FXML
-    private HBox authPanel, msgPanel;
+    private TextField loginField;
+    @FXML
+    private HBox authPanel;
+    @FXML
+    private HBox msgPanel;
 
     private Socket socket;
     private DataInputStream in;
@@ -42,7 +49,7 @@ public class ClientController {
         }
 
         try {
-            out.writeUTF("/auth " + userNameField.getText() + " " + userPasswordField.getText());
+            out.writeUTF("/auth " + loginField.getText() + " " + userPasswordField.getText());
         } catch (IOException e) {
             showError("Невозможно отправить запрос авторизации на сервер");
         }
@@ -84,51 +91,73 @@ public class ClientController {
 
     //  Обработка входящих ответов сервера на попытки авторизации
     private void tryToAuth() throws IOException {
-        while (true) {
-            String inputMessage = in.readUTF();
-            if (inputMessage.equals("/exit")) {
-                closeConnection();
-            }
-            if (inputMessage.startsWith("/authok ")) {
+        File file = new File(loginField.getText() + ".txt");
+        if (!file.exists()) file.createNewFile();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            while (true) {
+                String inputMessage = in.readUTF();
+                if (inputMessage.equals("/exit")) {
+                    closeConnection();
+                }
+                if (inputMessage.startsWith("/authok ")) {
 //                System.out.println("inputMessage: /authok");
-                setAuthorized(true);
-                String connectedUser = "Ваше имя: " + inputMessage.split("\\s+")[1];
-                Platform.runLater(() -> currentUser.setText(connectedUser));
-                break;
+                    setAuthorized(true);
+                    String connectedUser = "Ваше имя: " + inputMessage.split("\\s+")[1];
+                    Platform.runLater(() -> currentUser.setText(connectedUser));
+
+                    List<String> history = new LinkedList<>();
+                    while (reader.ready()) {
+                        history.add(reader.readLine());
+                        if (history.size() > LAST_LINES) {
+                            history.remove(0);
+                        }
+                    }
+                    for (String s : history) {
+                        chatArea.appendText(s + "\n");
+                    }
+                    break;
+                }
+                chatArea.appendText(inputMessage + "\n");
             }
-            chatArea.appendText(inputMessage + "\n");
         }
     }
 
-    //  Обработка входящих ответов сервера на посылаемые пользователем сообщения в чате
+//  Обработка входящих ответов сервера на посылаемые пользователем сообщения в чате
 //  и отображение этих сообщений в графическом клиенте
     private void runChat() throws IOException {
-        while (true) {
-            String message = in.readUTF();
-            if (message.startsWith("/")) {
-                if (message.equals("/exit")) {
-                    break;
-                }
+        String fileName = loginField.getText() + ".txt";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+            while (true) {
+                String message = in.readUTF();
+                if (message.startsWith("/")) {
+                    if (message.equals("/exit")) {
+                        break;
+                    }
 
-                if (message.startsWith("/changeok ")) {
-                    Platform.runLater(() -> {
-                        String[] tokens = message.split("\\s+");
-                        currentUser.setText("Ваше имя: " + tokens[1]);
-                    });
-                }
+                    if (message.startsWith("/changeok ")) {
+                        Platform.runLater(() -> {
+                            String[] tokens = message.split("\\s+");
+                            currentUser.setText("Ваше имя: " + tokens[1]);
+                        });
+                    }
 
-                if (message.startsWith("/clients_list ")) {
-                    Platform.runLater(() -> {
-                        String[] tokens = message.split("\\s+");
-                        clientsListView.getItems().clear();
-                        for (int i = 1; i < tokens.length; i++) {
-                            clientsListView.getItems().add(tokens[i]);
-                        }
-                    });
+                    if (message.startsWith("/clients_list ")) {
+                        Platform.runLater(() -> {
+                            String[] tokens = message.split("\\s+");
+                            clientsListView.getItems().clear();
+                            for (int i = 1; i < tokens.length; i++) {
+                                clientsListView.getItems().add(tokens[i]);
+                            }
+                        });
+                    }
+                    continue;
                 }
-                continue;
+                chatArea.appendText(message + "\n");
+                writer.write(message);
+                writer.newLine();
+                writer.flush();
             }
-            chatArea.appendText(message + "\n");
         }
     }
 

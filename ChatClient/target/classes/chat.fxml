@@ -5,12 +5,12 @@
 
 <?import javafx.scene.text.Font?>
 <VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="ru.geekbrains.javalevel2.lesson7.ClientController"
+      fx:controller="ru.geekbrains.chat.ClientController"
       prefWidth="600" prefHeight="400">
 
 
     <HBox fx:id="authPanel">
-        <TextField fx:id="userNameField" promptText="Введите имя пользователя" HBox.hgrow="ALWAYS"
+        <TextField fx:id="loginField" promptText="Введите имя пользователя" HBox.hgrow="ALWAYS"
                    onAction="#connect"/>
         <PasswordField fx:id="userPasswordField" promptText="Введите пароль" HBox.hgrow="ALWAYS"
                        onAction="#connect"/>

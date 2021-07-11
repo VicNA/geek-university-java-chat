@@ -2,7 +2,7 @@ package ru.geekbrains.chat;
 
 import java.sql.*;
 
-public class SqlliteUtil implements ConnectionService, AuthService {
+public class SqlliteUtil implements AuthService {
 
     private Connection connection;
     private Statement statement;
