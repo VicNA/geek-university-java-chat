@@ -11,29 +11,33 @@ public class Server {
 
     private LinkedList<ClientHandler> clients = new LinkedList<>();
 
-    private ConnectionService connection;
+    private AuthService authService;
 
     public Server() {
 //  Создание сервера сокета
-        try (ServerSocket serverSocket = new ServerSocket(PORT);) {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Сервер запущен. Ожидаем подключение клиентов");
 
-            connection = new SqlliteUtil();
+            authService = new SqlliteUtil();
 
 //          Ожидание подключении пользователей и создание клиентского обработчика
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Подключился новый клиент");
-                new ClientHandler(this, socket, (AuthService) connection);
+                new ClientHandler(this, socket);
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            connection.disconnect();
+            authService.disconnect();
         }
     }
 
-//  Добавление пользователя в список и рассылка сообщения остальным пользователям
+    public AuthService getAuthService() {
+        return authService;
+    }
+
+    //  Добавление пользователя в список и рассылка сообщения остальным пользователям
 //  о новом пользователя в чате
     public synchronized void subscribe(ClientHandler client) {
         broadcastMessage("Пользователь " + client.getName() + " вошел в чат ");
@@ -61,7 +65,7 @@ public class Server {
         StringBuilder sb = new StringBuilder(clients.size() * 10);
         sb.append("/clients_list ");
         for (ClientHandler client : clients) {
-            sb.append(client.getName() + " ");
+            sb.append(client.getName()).append(" ");
         }
         broadcastMessage(sb.toString());
     }

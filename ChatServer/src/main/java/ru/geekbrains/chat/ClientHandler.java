@@ -8,7 +8,6 @@ import java.net.Socket;
 public class ClientHandler {
     private Server server;
     private Socket socket;
-    private AuthService authService;
 
     private String login;
     private String name;
@@ -18,11 +17,10 @@ public class ClientHandler {
 
 //  Получение сокета от сервера, создание потоков in/out,
 //  запуск в отдельном потоке чтения данных получаемых от пользователя
-    public ClientHandler(Server server, Socket socket, AuthService authService) {
+    public ClientHandler(Server server, Socket socket) {
         try {
             this.server = server;
             this.socket = socket;
-            this.authService = authService;
 
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
@@ -80,11 +78,11 @@ public class ClientHandler {
                         sendMessage("SERVER: Данное имя пользователя является текущим");
                         continue;
                     }
-                    if (authService.isNameBusy(tokens[1])) {
+                    if (server.getAuthService().isNameBusy(tokens[1])) {
                         sendMessage("SERVER: Данное имя пользователя уже занято");
                         continue;
                     }
-                    authService.changeNickname(login, tokens[1]);
+                    server.getAuthService().changeNickname(login, tokens[1]);
                     String oldName = name;
                     name = tokens[1];
 
@@ -120,7 +118,7 @@ public class ClientHandler {
                 continue;
             }
 
-            String[] auth = authService.loggedIn(tokens[1], tokens[2]);
+            String[] auth = server.getAuthService().loggedIn(tokens[1], tokens[2]);
             if (auth == null) {
                 sendMessage("SERVER: Такой логин отстутствует");
                 continue;
